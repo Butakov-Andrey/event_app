@@ -1,4 +1,5 @@
 from email.policy import default
+from xml.dom import ValidationErr
 from rest_framework import serializers
 
 from .models import Application, Event, Respond
@@ -35,6 +36,13 @@ class ApplicationSerializer(serializers.ModelSerializer):
         )
         model = Application
 
+    def validate(self, data):
+        event = Event.objects.get(name=data['event'])
+        if event.type == '1':
+            return data
+        else:
+            raise ValidationErr('Not your event')
+
     def save(self, **kwargs):
         kwargs["user"] = self.fields["user"].get_default()
         return super().save(**kwargs)
@@ -56,6 +64,13 @@ class RespondSerializer(serializers.ModelSerializer):
             'file',
         )
         model = Respond
+
+    def validate(self, data):
+        event = Event.objects.get(name=data['event'])
+        if event.type == '2':
+            return data
+        else:
+            raise ValidationErr('Not your event')
 
     def save(self, **kwargs):
         kwargs["user"] = self.fields["user"].get_default()
