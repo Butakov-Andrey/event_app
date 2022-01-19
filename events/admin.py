@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from .models import Application, Event, Respond
 
 
@@ -8,6 +9,7 @@ class EventAdmin(admin.ModelAdmin):
         'type',
         'created_at',
         'started_at',
+        'author',
     )
 
 

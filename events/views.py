@@ -1,12 +1,11 @@
-from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth import get_user_model
-
+from django.core.mail import send_mail
 from rest_framework import generics, permissions
 
 from .models import Application, Event, Respond
-from .serializers import AccountSerializer, ApplicationSerializer
-from .serializers import EventSerializer, RespondSerializer
+from .serializers import (AccountSerializer, ApplicationSerializer,
+                          EventSerializer, RespondSerializer)
 
 
 class EventList(generics.ListCreateAPIView):
@@ -26,8 +25,13 @@ class ApplicationList(generics.ListCreateAPIView):
     serializer_class = ApplicationSerializer
 
     def create(self, request, *args, **kwargs):
-        response = super(ApplicationList, self).create(request, *args, **kwargs)
+        response = super(ApplicationList, self).create(
+            request, *args, **kwargs
+            )
         event = Event.objects.get(id=self.request.POST["event"])
+        author_email = [get_user_model().objects.get(
+            username=event.author
+            ).email]
         send_mail(
             subject=f'Application on event {self.request.POST["event"]}',
             message=f'''
@@ -35,8 +39,12 @@ class ApplicationList(generics.ListCreateAPIView):
             Application text: {self.request.POST["text"]}
             ''',
             from_email=settings.EMAIL_HOST_USER,
-            recipient_list=[get_user_model().objects.get(username=event.author).email],
+            # select event author's email
+            recipient_list=author_email,
         )
+        print([get_user_model().objects.get(
+                username=event.author
+                ).email])
         return response
 
 
@@ -45,8 +53,13 @@ class RespondList(generics.ListCreateAPIView):
     serializer_class = RespondSerializer
 
     def create(self, request, *args, **kwargs):
-        response = super(RespondList, self).create(request, *args, **kwargs)
+        response = super(RespondList, self).create(
+            request, *args, **kwargs
+            )
         event = Event.objects.get(id=self.request.POST["event"])
+        author_email = [get_user_model().objects.get(
+            username=event.author
+            ).email]
         send_mail(
             subject=f'Respond on event {self.request.POST["event"]}',
             message=f'''
@@ -54,7 +67,8 @@ class RespondList(generics.ListCreateAPIView):
             Respond text: {self.request.POST["text"]}
             ''',
             from_email=settings.EMAIL_HOST_USER,
-            recipient_list=[get_user_model().objects.get(username=event.author).email],
+            # select event author's email
+            recipient_list=author_email,
         )
         return response
 
@@ -64,5 +78,6 @@ class AccountList(generics.ListAPIView):
     serializer_class = AccountSerializer
 
     def get_queryset(self):
+        # show event list with applications and responds of authorized user
         author = self.request.user
         return Event.objects.filter(author=author)
