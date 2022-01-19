@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
-from rest_framework import generics, permissions
+from rest_framework import filters, generics, permissions
 
 from .models import Application, Event, Respond
 from .serializers import (AccountSerializer, ApplicationSerializer,
@@ -12,6 +12,8 @@ class EventList(generics.ListCreateAPIView):
     permission_classes = (permissions.IsAdminUser,)
     queryset = Event.objects.all()
     serializer_class = EventSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['type']
 
 
 class EventDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -23,6 +25,8 @@ class EventDetail(generics.RetrieveUpdateDestroyAPIView):
 class ApplicationList(generics.ListCreateAPIView):
     queryset = Application.objects.all()
     serializer_class = ApplicationSerializer
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['created_at']
 
     def create(self, request, *args, **kwargs):
         response = super(ApplicationList, self).create(
